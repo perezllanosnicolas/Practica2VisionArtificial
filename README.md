@@ -53,24 +53,28 @@ vision-ocr-paneles/
 
 ## Descripción del sistema
 El sistema OCR se compone de las siguientes etapas:
-1. Preprocesado y segmentación de caracteres
-    -Umbralización adaptativa.
-    -Detección de componentes conexas.
-    -Filtrado geométrico y recrte.
-2. Extracción de características
-     -Normalización a un tamaño fijo.
-     -Vectorización en niveles de gris (baseline).
-     -Alternativas: HOG / otros descriptores.
-3. Reducción de dimensionalidad
-      -LDA (sistema base).
-      -PCA u otras alternativas (Ejercicio 2).
-4. Clasificación multiclase
-        -Clasificador LDA + Bayes.
-        -Alternativas: KNN, SVM, etc.
-5. OCR sobre paneles
-        -Agrupación de caracteres en líneas (RANSAC).
-        -Orden de lectura izquierda->derecha, arriva->abajo.
-        -Generación del texto final usando + como separador de líneas.
+1. Preprocesado y segmentación de caracteres:
+-Umbralización adaptativa.
+-Detección de componentes conexas.
+-Filtrado geométrico y recorte.
+
+2. Extracción de características:
+-Normalización a un tamaño fijo.
+-Vectorización en niveles de gris (baseline).
+-Alternativas: HOG / otros descriptores.
+
+3. Reducción de dimensionalidad:
+-LDA (sistema base).
+-PCA u otras alternativas (Ejercicio 2).
+
+4. Clasificación multiclase:
+-Clasificador LDA + Bayes.
+-Alternativas: KNN, SVM, etc.
+
+5. OCR sobre paneles:
+-Agrupación de caracteres en líneas (RANSAC).
+-Orden de lectura izquierda->derecha, arriba->abajo.
+-Generación del texto final usando + como separador de líneas.
 
 ## Ejecución
 Ejercicio 1 y 2 - Evaluación de clasificadores OCR:
@@ -95,7 +99,7 @@ python scripts/main.py --visualize_ocr
 ```
 El parámetro --visualize_ocr activa la visualización paso a paso del proceso.
 
-##Resultados
+## Resultados
 Los resultados numéricos (accuracy, matrices de confusión, distancia de Levenshtein) se inluyen en la memoria.
 El fichero resultado.txt sigue exactamente el formato exigido en el enunciado.
 
