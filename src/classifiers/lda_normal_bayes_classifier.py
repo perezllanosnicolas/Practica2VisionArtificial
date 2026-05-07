@@ -22,36 +22,39 @@ class LdaNormalBayesClassifier(OCRClassifier):
         self.classifier = None
 
     def train(self, images_dict):
-        """.
-        Given character images in a dictionary of list of char images of fixed size, 
-        train the OCR classifier. The dictionary keys are the class of the list of images 
-        (or corresponding char).
-
-        :images_dict is a dictionary of images (name of the images is the key)
-        """
-
-        # Take training images and do feature extraction
         
-        X = ... # Feature vectors by rows
-        y = ... # Labels for each row in X 
+        x = []
+        y = []
+        
+        for key in images_dict:
+            label = self.char2label(key)
+            for img in images_dict[key]:
+                features = self.extract_features(img)
+                x.append(features)
+                y.append(label)
+                
+        x = np.array(x, dtype=np.float32)
+        y = np.array(y, dtype=np.int32)
+        
+        self.lda = LinearDiscriminantAnalysis()
+        x_reduced = self.lda.fit_transform(x, y)
+        
+        self.classifier = cv2.ml.NormalBayesClassifier_create()
+        self.classifier.train(np.float32(x_reduced), cv2.ml.ROW_SAMPLE, y)
 
-        # Perform LDA training
+        return x_reduced, y
 
-        # Perform Classifier training
-
-        return samples, labels
 
     def predict(self, img):
-        """.
-        Given a single image of a character already cropped classify it.
-
-        :img Image to classify
         
-        """
+        features = self.extract_features(img)
+        features = np.array([features], dtype=np.float32)
         
-        y = ... # Obtain the estimated label by the LDA + Bayes classifier
+        #Proyectar en el espacio LDA
+        features_reduced = self.lda.transform(features)
+        _, results = self.classifier.predict(np.float32(features_reduced))
 
-        return int(y)
+        return int(results[0][0])
 
 
 

@@ -4,6 +4,9 @@
 #
 
 import string
+import cv2
+import numpy as np
+
 
 class OCRClassifier:
     """
@@ -40,4 +43,25 @@ class OCRClassifier:
                 
         return responses
 
-
+    #Umbralización, recorte, redimensionado y vectorización de la imagen
+    def extract_features(self, img):
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray= img
+        
+        thresh= cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+        
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if contours:
+            c = max(contours, key=cv2.contourArea)
+            x, y, w, h = cv2.boundingRect(c)
+            roi = gray[y:y+h, x:x+w]
+        else:
+            roi = gray
+        
+        roi_resized = cv2.resize(roi, self.ocr_char_size)
+        
+        return roi_resized.flatten()    
+        
