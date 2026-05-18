@@ -46,9 +46,9 @@ class OCRClassifier:
     #Umbralización, recorte, redimensionado y vectorización de la imagen
     def extract_features(self, img):
         if len(img.shape) == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         else:
-            gray= img
+            gray = img
         
         thresh= cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
         
