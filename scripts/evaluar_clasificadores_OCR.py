@@ -18,36 +18,9 @@ import sklearn.metrics
 from src.classifiers.knn_hog_classifier import KnnHogClassifier
 from src.classifiers.lda_normal_bayes_classifier import LdaNormalBayesClassifier
 from src.classifiers.pca_svm_classifier import PcaSvmClassifier
+from src.utils.dataset import load_images_dict
 
 
-def load_images_dict(base_path):
-    
-    images_dict = {}
-    def add_images_from_folder(folder_path, label):
-        if os.path.exists(folder_path):
-            files = glob.glob(os.path.join(folder_path, '*.png'))
-            if files:
-                if label not in images_dict:
-                    images_dict[label] = []
-                for f in files:
-                    img = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
-                    if img is not None:
-                        images_dict[label].append(img)
-    
-    for i in range(10):
-        label = str(i)
-        add_images_from_folder(os.path.join(base_path, label), label)
-        
-    may_root = os.path.join(base_path, 'may')
-    if os.path.exists(may_root):
-        for char_folder in os.listdir(may_root):
-            add_images_from_folder(os.path.join(may_root, char_folder), char_folder)
-            
-    min_root = os.path.join(base_path, 'min')
-    if os.path.exists(min_root):
-        for char_folder in os.listdir(min_root):
-            add_images_from_folder(os.path.join(min_root, char_folder), char_folder)
-    return images_dict
 
 def plot_confusion_matrix(cm,class_names, title='Confusion matrix', cmap='Blues'):
     '''

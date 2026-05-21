@@ -80,22 +80,24 @@ El sistema OCR se compone de las siguientes etapas:
 Ejercicio 1 y 2 - Evaluación de clasificadores OCR:
 Desde la raíz del proyecto:
 ```bash
-python scripts/evaluar_clasificadores_OCR.py data/train_ocr data/test_ocr lda
+python scripts/evaluar_clasificadores_OCR.py --train_path data/train_ocr --validation_path data/test_ocr --classifier lda
 ```
-El parámetro final permite seleccionar el clasificador a evaluar.
+El parámetro final permite seleccionar el clasificador a evaluar. (lda, knn o svm)
 
 Ejercicio 3 - Evaluación de OCR sobre paneles:
 ```bash
-python src/panel_ocr/main_panels_ocr.py data/test_ocr_panels results/resultado.txt
+python src/panel_ocr/main_panels_ocr.py --train_path data/train_ocr --test_path data/test_ocr_panels
 ```
+Nota: Este script generará un archivo resultado.txt en la raíz del proyecto.
+
 La calidad del OCR puede evaluarse mediante:
 ```bash
-python scripts/evaluar_resultados_test_ocr_panels.py results/resultado.txt data/test_ocr_panels/gt.txt
+python scripts/evaluar_resultados_test_ocr_panels.py
 ```
 
 Ejercicio 4 - Sistema completo con detección de paneles:
 ```bash
-python scripts/main.py --visualize_ocr
+python scripts/main.py --train_path data/train_ocr --test_path data/test_ocr_panels --visualize_ocr
 ```
 El parámetro --visualize_ocr activa la visualización paso a paso del proceso.
 

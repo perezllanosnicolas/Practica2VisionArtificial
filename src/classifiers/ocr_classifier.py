@@ -50,18 +50,21 @@ class OCRClassifier:
         else:
             gray = img
         
-        thresh= cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-        
+        thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         if contours:
-            c = max(contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(c)
-            roi = gray[y:y+h, x:x+w]
+            # IDEA PROPIA: En lugar del max_contour, calculamos el Bounding Box que engloba TODOS
+            # los contornos. Así evitamos amputar el punto de la 'i' o 'j'.
+            x_min = min([cv2.boundingRect(c)[0] for c in contours])
+            y_min = min([cv2.boundingRect(c)[1] for c in contours])
+            x_max = max([cv2.boundingRect(c)[0] + cv2.boundingRect(c)[2] for c in contours])
+            y_max = max([cv2.boundingRect(c)[1] + cv2.boundingRect(c)[3] for c in contours])
+            
+            roi = gray[y_min:y_max, x_min:x_max]
         else:
             roi = gray
         
         roi_resized = cv2.resize(roi, self.ocr_char_size)
-        
-        return roi_resized.flatten()    
+        return roi_resized.flatten() 
         
