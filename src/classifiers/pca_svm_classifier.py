@@ -9,7 +9,7 @@ class PcaSvmClassifier(OCRClassifier):
     """
     def __init__ (self, ocr_char_size):
         super().__init__(ocr_char_size)
-        self.pca = PCA(n_components=0.95) # Mantener el 95% de la varianza
+        self.pca = PCA(n_components=0.95)
         self.svm = cv2.ml.SVM_create()
         self.svm.setType(cv2.ml.SVM_C_SVC)
         self.svm.setKernel(cv2.ml.SVM_LINEAR)

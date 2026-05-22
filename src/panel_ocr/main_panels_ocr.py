@@ -6,11 +6,8 @@ import glob
 import math
 import warnings
 from sklearn.linear_model import RANSACRegressor, LinearRegression
-
-import glob
 import sys
 
-# Agregar el directorio raíz del proyecto al sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.classifiers.knn_hog_classifier import KnnHogClassifier
@@ -48,14 +45,12 @@ def filter_basic_geometry(contours, hierarchy, img_shape):
     margin_x, margin_y = int(img_w * 0.03), int(img_h * 0.03)
     
     pre_valid_boxes = []
-    all_boxes = []
 
     if hierarchy is None:
-        return pre_valid_boxes, all_boxes
+        return pre_valid_boxes
 
     for i, cnt in enumerate(contours):
         x, y, w, h = cv2.boundingRect(cnt)
-        all_boxes.append([x, y, w, h])
 
         # Ignorar contornos internos (agujeros)
         if hierarchy[0][i][3] != -1:
@@ -90,7 +85,7 @@ def filter_basic_geometry(contours, hierarchy, img_shape):
         if solidity >= 0.25 and extent >= 0.15:
             pre_valid_boxes.append([x, y, w, h])
 
-    return pre_valid_boxes, all_boxes
+    return pre_valid_boxes
 
 def remove_nested_boxes(boxes):
     """Elimina las cajas que contienen el centro de otras cajas (cajas contenedoras)."""
@@ -144,12 +139,12 @@ def extract_character_boxes(image):
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
     
     img_shape = image.shape[:2]
-    pre_valid_boxes, all_boxes = filter_basic_geometry(contours, hierarchy, img_shape)
+    pre_valid_boxes = filter_basic_geometry(contours, hierarchy, img_shape)
     
     non_nested_boxes = remove_nested_boxes(pre_valid_boxes)
     final_boxes = filter_by_height_variance(non_nested_boxes)
             
-    return final_boxes, all_boxes, thresh
+    return final_boxes
 
 # ==========================================
 # 2. AGRUPACIÓN DE LÍNEAS (RANSAC)
@@ -223,48 +218,7 @@ def find_lines_ransac(boxes, distance_threshold=10):
     return lines
 
 # ==========================================
-# 3. CLASIFICADOR Y UTILIDADES
-# ==========================================
-
-def draw_visualizations(img, all_boxes, boxes, lines, thresh):
-    """Dibuja y muestra los resultados parciales y finales en ventanas."""
-    img_w = img.shape[1]
-    
-    cv2.imshow("1. Matriz Binaria", thresh)
-
-    # Contornos crudos
-    img_raw = img.copy()
-    for x, y, w, h in all_boxes:
-        cv2.rectangle(img_raw, (x, y), (x+w, y+h), (0, 0, 255), 1)
-    cv2.imshow("2. Contornos RAW", img_raw)
-
-    # Contornos válidos tras filtros
-    img_filtered = img.copy()
-    for x, y, w, h in boxes:
-        cv2.rectangle(img_filtered, (x, y), (x+w, y+h), (255, 255, 0), 1)
-    cv2.imshow("3. Contornos Validos", img_filtered)
-
-    # Topología RANSAC
-    img_ransac = img.copy()
-    for line in lines:
-        centers = []
-        for x, y, w, h in line:
-            cv2.rectangle(img_ransac, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            centers.append([int(x + w/2), int(y + h/2)])
-        
-        # Dibujar la línea ajustada sobre las cajas
-        if len(centers) >= 2:
-            centers_array = np.array(centers, dtype=np.int32)
-            vx, vy, x0, y0 = cv2.fitLine(centers_array, cv2.DIST_L2, 0, 0.01, 0.01)
-            if vx[0] != 0:
-                m = vy[0] / float(vx[0])
-                c = y0[0] - m * x0[0]
-                cv2.line(img_ransac, (0, int(c)), (img_w, int(m * img_w + c)), (255, 255, 0), 1)
-
-    cv2.imshow("4. Topologia RANSAC", img_ransac)
-
-# ==========================================
-# 4. FLUJO PRINCIPAL
+# 3. FLUJO PRINCIPAL
 # ==========================================
 
 def load_images_dict(base_path):
@@ -295,12 +249,7 @@ def load_images_dict(base_path):
             add_images_from_folder(os.path.join(min_root, char_folder), char_folder)
     return images_dict
 
-def main():
-    parser = argparse.ArgumentParser(description='Ejecuta OCR sobre un conjunto de imágenes de prueba.')
-    parser.add_argument('--test_path', default="data/test_ocr_panels", help='Directorio con los recortes')
-    parser.add_argument('--train_path', default="data/train_ocr", help='Directorio con datos de entrenamiento OCR')
-    args = parser.parse_args()
-
+def main(args):
     search_path = os.path.join(args.test_path, "*.png")
     image_paths = sorted(glob.glob(search_path))
     
@@ -317,25 +266,25 @@ def main():
     print("Modelo entrenado.")
 
     resultados_memoria = {}
-    indice_actual = 0
     total_imagenes = len(image_paths)
 
-    while indice_actual < total_imagenes:
-        img_path = image_paths[indice_actual]
+    # Iteración automática sin necesidad de pulsar teclas
+    for indice_actual, img_path in enumerate(image_paths):
         img = cv2.imread(img_path)
         
         if img is None:
-            indice_actual += 1
             continue
             
         img_h, img_w = img.shape[:2]
         filename = os.path.basename(img_path)
 
-        boxes, all_boxes, thresh = extract_character_boxes(img)
+        # Extraer cajas de texto y líneas
+        boxes = extract_character_boxes(img)
         lines = find_lines_ransac(boxes, distance_threshold=img_h * 0.04)
 
         # Lectura OCR real
         texto_lineas = []
+
         for line in lines:
             # Predecir cada recuadro (carácter) en la línea
             chars = []
@@ -344,6 +293,7 @@ def main():
                 predicted_label = model.predict(roi)
                 char_str = model.label2char(predicted_label)
                 chars.append(char_str)
+
             texto_linea_actual = "".join(chars)
             texto_lineas.append(texto_linea_actual)
 
@@ -353,21 +303,8 @@ def main():
         linea_txt = f"{filename};0;0;{img_w};{img_h};panel;1.0;{texto_ocr_final}\n"
         resultados_memoria[filename] = linea_txt
         
-        print(f"[{indice_actual + 1}/{total_imagenes}] {filename} | Flechas Izq/Der: Navegar | ESC: Salir")
-
-        # Visualizaciones
-        draw_visualizations(img, all_boxes, boxes, lines, thresh)
-        
-        # Control de navegación en ventanas
-        key = cv2.waitKeyEx(0)
-        if key == 27: # ESC
-            break
-        elif key in [2424832, 65361, 81, ord('a'), ord('A')]: # Flecha Izq o 'A'
-            indice_actual = max(0, indice_actual - 1)
-        else: # Siguiente imagen
-            indice_actual += 1
-
-    cv2.destroyAllWindows()
+        # Mostrar progreso por consola
+        print(f"[{indice_actual + 1}/{total_imagenes}] Procesado exitosamente: {filename}")
 
     # Volcar memoria a archivo
     with open("resultado.txt", "w") as out_file:
@@ -376,4 +313,14 @@ def main():
     print("Ejecución finalizada. Archivo 'resultado.txt' generado exitosamente.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description='Trains and executes a given detector over a set of testing images')
+    parser.add_argument(
+        '--detector', type=str, nargs="?", default="", help='Detector string name')
+    parser.add_argument(
+        '--train_path', default="", help='Select the training data dir')
+    parser.add_argument(
+        '--test_path', default="", help='Select the testing data dir')
+
+    args = parser.parse_args()
+    main(args)
