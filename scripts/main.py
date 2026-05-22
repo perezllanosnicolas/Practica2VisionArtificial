@@ -130,7 +130,7 @@ def main():
                     panel_roi = img[cy1:cy2, cx1:cx2]
                     
                     # Inferencia OCR Topológica
-                    boxes, _, _ = extract_character_boxes(panel_roi)
+                    boxes = extract_character_boxes(panel_roi)
                     lines = find_lines_ransac(boxes, distance_threshold=(cy2 - cy1) * 0.04)
                     
                     texto_lineas = []
