@@ -1,3 +1,42 @@
-# Ignore image files in data folders
-data/**/*.png
+# ==========================================
+# Entornos Virtuales
+# ==========================================
+.venv/
+venv/
+env/
 
+# ==========================================
+# Archivos de caché y compilados de Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ==========================================
+# Datasets y archivos pesados
+# ==========================================
+# Ignorar toda la carpeta data por defecto para no saturar GitHub
+data/*
+# Pero mantener (hacer excepciones) para muestras, fuentes o archivos de texto
+!data/samples/
+!data/fonts/
+!data/*.txt
+*.zip
+*.tar.gz
+
+# ==========================================
+# Resultados y logs dinámicos
+# ==========================================
+resultado.txt
+resultado_*.txt
+debug_hybrid/
+debug_*/
+
+# ==========================================
+# Archivos de IDEs y Sistema Operativo
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

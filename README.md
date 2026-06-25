@@ -1,112 +1,57 @@
-# Práctica Obligatoria 2 – OCR de paneles de autopista
+# Highway Traffic Sign Detection & OCR | Classical Computer Vision
 
-Asignatura: **Visión Artificial**  
-Universidad Rey Juan Carlos  
+![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.8+-orange.svg)
+![NumPy](https://img.shields.io/badge/NumPy-2.40+-blue.svg)
 
-Este repositorio contiene la implementación de un sistema completo de **Reconocimiento Óptico de Caracteres (OCR)** aplicado a paneles informativos de autopista, desarrollado como la **Práctica Obligatoria 2** de la asignatura.
+> **Note:** This repository is **Phase 2** of an End-to-End Traffic Sign Recognition system. If you are looking for the pure Panel Detection architecture (Phase 1), please check out my [Traffic-Sign-Detection-CV repository](https://github.com/perezllanosnicolas/Traffic-Sign-Detection-CV).
 
-El sistema permite:
-- Entrenar y evaluar clasificadores de caracteres.
-- Leer automáticamente el texto de paneles de carretera ya recortados.
-- Integrar el OCR con el detector de paneles desarrollado en la Práctica 1.
+## Overview
+This repository contains a robust Machine Learning and Computer Vision pipeline designed to extract and read text from highway information panels. Built entirely from scratch without relying on modern Deep Learning APIs (like Tesseract or YOLO), this project demonstrates a deep understanding of Classical ML algorithms, feature extraction, and geometric topology.
 
----
+## Core Architecture
+The system operates in a sequential pipeline to handle perspective distortions and varying lighting conditions typical in driving scenarios:
 
-## Estructura del repositorio
+1. **Adaptive Binarization:** Applies local Gaussian adaptive thresholding to isolate characters regardless of uneven sun glare or hard shadows.
+2. **RANSAC Line Grouping:** Extracts individual character contours and groups them into logical horizontal lines using RANSAC linear regression (tolerating up to 8 degrees of perspective tilt).
+3. **Feature Extraction & Classification:** Computes HOG (Histogram of Oriented Gradients) and PCA descriptors for each character, classifying them using a trained ML model.
 
-```text
-vision-ocr-paneles/
-│
-├── data/
-│   ├── train_ocr/               # Imágenes de entrenamiento de caracteres
-│   ├── test_ocr/                # Imágenes de validación/test de caracteres
-│   ├── test_ocr_panels/         # Paneles recortados + gt.txt
-│   └── fonts/
-│       └── HWYGOTH.TTF           # Fuente highway-gothic
-│
-├── src/
-│   ├── classifiers/             # Clasificadores OCR
-│   │   ├── ocr_classifier.py
-│   │   └── lda_normal_bayes_classifier.py
-│   │
-│   ├── preprocessing/           # Segmentación y features
-│   │
-│   ├── panel_ocr/               # OCR sobre paneles
-│   │   └── main_panels_ocr.py
-│   │
-│   └── utils/                   # Utilidades comunes
-│
-├── scripts/
-│   ├── evaluar_clasificadores_OCR.py
-│   ├── evaluar_resultados_test_ocr_panels.py
-│   └── main.py                  # Integración con la Práctica 1
-│
-├── results/                     # Resultados generados
-│   ├── resultado.txt
-│
-├── memory/
-│   └── memoria_practica_2.pdf
-│
-├── requirements.txt
-└── README.md
-```
+## Performance & ML Benchmarking
 
-## Descripción del sistema
-El sistema OCR se compone de las siguientes etapas:
-1. Preprocesado y segmentación de caracteres:
--Umbralización adaptativa.
--Detección de componentes conexas.
--Filtrado geométrico y recorte.
+We benchmarked three classical Machine Learning models to find the optimal classifier for character recognition. The **LDA + Normal Bayes** model achieved the highest accuracy on our validation set.
 
-2. Extracción de características:
--Normalización a un tamaño fijo.
--Vectorización en niveles de gris (baseline).
--Alternativas: HOG / otros descriptores.
+<p align="center">
+  <img src="docs/assets/ml_models_comparison.png" width="700" alt="ML Models Comparison">
+</p>
 
-3. Reducción de dimensionalidad:
--LDA (sistema base).
--PCA u otras alternativas (Ejercicio 2).
+### End-to-End Pipeline Evaluation
+When integrating the OCR module with our MSER panel detector on raw highway images, the system successfully evaluated **85 valid text matches**. The performance was measured using the **Levenshtein (Edit) Distance** against a Ground Truth dataset.
 
-4. Clasificación multiclase:
--Clasificador LDA + Bayes.
--Alternativas: KNN, SVM, etc.
+<p align="center">
+  <img src="docs/assets/TestDetectionLevenshtein.png" width="700" alt="Levenshtein Distance Histogram">
+</p>
 
-5. OCR sobre paneles:
--Agrupación de caracteres en líneas (RANSAC).
--Orden de lectura izquierda->derecha, arriba->abajo.
--Generación del texto final usando + como separador de líneas.
+> **Deep Dive:** Want to understand the math behind our models, why the Levenshtein histogram has a "long tail", or why we chose RANSAC? Read our detailed [Technical Evaluation Report](docs/technical_report.md).
 
-## Ejecución
-Ejercicio 1 y 2 - Evaluación de clasificadores OCR:
-Desde la raíz del proyecto:
+## Installation & Usage
+
+**1. Clone the repository and install dependencies:**
 ```bash
-python scripts/evaluar_clasificadores_OCR.py --train_path data/train_ocr --validation_path data/test_ocr --classifier lda
+git clone [https://github.com/tu-usuario/Traffic-Sign-OCR-System.git](https://github.com/tu-usuario/Traffic-Sign-OCR-System.git)
+cd Traffic-Sign-OCR-System
+pip install -r requirements.txt
 ```
-El parámetro final permite seleccionar el clasificador a evaluar. (lda, knn o svm)
-
-Ejercicio 3 - Evaluación de OCR sobre paneles:
+**2. Evaluate OCR Machine Learning Models:**
 ```bash
-python src/panel_ocr/main_panels_ocr.py --train_path data/train_ocr --test_path data/test_ocr_panels
+python -m scripts.evaluate_ocr_models --classifier knn --train_path data/train_ocr --val_path data/test_ocr
 ```
-Nota: Este script generará un archivo resultado.txt en la raíz del proyecto.
-
-La calidad del OCR puede evaluarse mediante:
+**3. Run the Full OCR Pipeline (with live visualization):
 ```bash
-python scripts/evaluar_resultados_test_ocr_panels.py
+python -m scripts.evaluate_ocr_models --classifier knn --train_path data/train_ocr --val_path data/test_ocr
 ```
 
-Ejercicio 4 - Sistema completo con detección de paneles:
-```bash
-python scripts/main.py --train_path data/train_ocr --test_path data/test_ocr_panels --visualize_ocr
-```
-El parámetro --visualize_ocr activa la visualización paso a paso del proceso.
-
-## Resultados
-Los resultados numéricos (accuracy, matrices de confusión, distancia de Levenshtein) se inluyen en la memoria.
-El fichero resultado.txt sigue exactamente el formato exigido en el enunciado.
-
-## Autores
-- [Nicolás Pérez](https://github.com/perezllanosnicolas)
-- [Rubén Pisonero](https://github.com/rpisoner)
-
-Grado en Ingeniería de Computadores, URJC
+## Authors 
+This project was co-developed as part of a joint Computer Engineering research initiative by:
+- Nicolás Pérez  - [www.linkedin.com/in/nicolasperezllanos]     | [https://github.com/perezllanosnicolas]
+- Rubén Pisonero - [www.linkedin.com/in/ruben-pisonero]        | [https://github.com/rpisoner]

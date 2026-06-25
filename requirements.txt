@@ -1,0 +1,9 @@
+# Núcleo de Visión Computacional y Matrices
+numpy>=2.4.6
+opencv-python>=4.13.0.92
+
+# Machine Learning y Modelos Clásicos (PCA, SVM, RANSAC)
+scikit-learn>=1.8.0
+
+# Visualización y Gráficas de Evaluación
+matplotlib>=3.10.9
